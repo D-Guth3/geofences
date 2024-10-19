@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>Geolocation API</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous" />
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,800;1,800&display=swap"
+    rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #20282e;
+      font-family: "Open Sans", sans-serif;
+      font-weight: 400;
+      font-size: 100%;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      height: 3rem;
+    }
+
+    h1 {
+      font-weight: 800;
+    }
+
+    p {
+      line-height: 1.7rem;
+    }
+
+    #map {
+      /* height is set in JS */
+      background: #2d2f31;
+    }
+
+    .leaflet-bar a {
+      /* Override the default style for Leaflet's zoom  */
+      background: rgba(100, 100, 100, 0.9);
+      color: rgba(244, 244, 244, 0.8);
+    }
+
+    a:hover {
+      color: rgb(130, 131, 132);
+      text-decoration: none;
+    }
+
+    .leaflet-container {
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip {
+      background: rgb(62, 62, 62);
+      color: rgb(244, 244, 244);
+      border: none;
+      padding: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .leaflet-popup-content p,
+    .leaflet-popup-content a {
+      line-height: 1.6rem;
+      font-size: 1.1rem;
+      font-weight: 400;
+    }
+
+    .leaflet-popup-content h3 {
+      font-size: 1.8rem;
+      font-weight: 400;
+    }
+
+    /* Custom Tool tips */
+    .leaflet-tooltip-own {
+      background: rgba(58, 58, 58, 0.955);
+      color: rgb(244, 244, 244);
+      border: none;
+      font-size: 1rem;
+      border-radius: 5px;
+      padding: 10px;
+      font-family: "Open Sans", sans-serif;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .leaflet-tooltip-left:before {
+      right: 0;
+      margin-right: -12px;
+      border-left-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .leaflet-tooltip-right:before {
+      left: 0;
+      margin-left: -12px;
+      border-right-color: rgba(0, 0, 0, 0.4);
+    }
+
+    #toggle-geofence-btn {
+    background-color: #eb1616; 
+    border-color: #eb1616;     
+    color: white;
+    }
+
+    #toggle-geofence-btn:hover {
+    background-color: #c01515; /* Darker on hover */
+    }
+
+    /* Small devices (landscape phones, 576px and up) */
+    @media (min-width: 576px) {}
+
+    /* Medium devices (tablets, 768px and up) */
+    @media (min-width: 768px) {}
+
+    /* Large devices (desktops, 992px and up) */
+    @media (min-width: 992px) {}
+
+    /* Extra large devices (large desktops, 1200px and up) */
+    @media (min-width: 1200px) {}
+  </style>
+</head>
+
+<body>
+
+  <div class="container-fluid">
+    <header class="row bg-dark text-white p-3">
+      <div class="col-12 col-md-8">
+        <h1 class="display-5">Lessons in Geofencing</h1>
+      </div>
+      <div class="col-4 align-self-center">
+        <p class="d-flex justify-content-end my-auto">
+          <a class="btn btn-primary" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button"
+            aria-controls="offcanvasExample">
+            Get Started
+          </a>
+        </p>
+      </div>
+    </header>
+
+    <section class="row">
+      <div class="p-0">
+        <div id="map"></div>
+      </div>
+    </section>
+
+    <footer class="row bg-dark text-white p-2">
+      <p class="text-center"></p>
+    </footer>
+  </div>
+
+  <div class="offcanvas offcanvas-start bg-dark text-white" tabindex="-1" id="offcanvasExample"
+    aria-labelledby="offcanvasExampleLabel">
+    <div class="offcanvas-header">
+      <h3 class="offcanvas-title" id="offcanvasExampleLabel">Burger King, 2018</h3>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+          <!-- Add a description for the map here -->
+    <div class="mt-3">
+      <p>
+        In 2018, Burger King launched a cheeky campaign offering it's signature Whopper burger for just one cent. <br>
+        The catch was that the offer was only valid if customers placed their order through the Burger King app and were within 600 feet (182.88 meters) of a McDonald’s. <br>
+        The app would check your location relative to a geofence, determine your eligibility for the deal, and then direct you to the nearest Burger King to pick up your order.
+      </p>
+    </div>
+
+      
+      
+      
+      <button class="btn btn-primary d-none" id="geolocate-ui">Enable geolocation</button>
+      
+      
+      
+      <!--geofence button -->
+       <button class="btn btn-info" id="toggle-geofence-btn">Reveal Geofences</button>
+
+      
+      <div class="mt-1" id="locateFeedback"></div>
+      <!-- The spinner that runs while API call resolves. Hidden until geolocation starts. -->
+      <div id="loading" class="d-flex justify-content-center my-2 align-items-center w-100 h-80 d-none">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+      <hr />
+      <ul class="list-unstyled">
+        <li>Author: <a href="https://github.com/D-Guth3">Darren Guthrie</a></li>
+        <li>Created: 10|20|2024</li>
+        <li>News Source: <a href="https://www.cnbc.com/2018/12/04/burger-king-sells-whoppers-for-a-penny-at-mcdonalds-locations.html">CNBC</a></li>
+        <li>All POI Data Provided By: <a href="https://overpass-turbo.eu/">Overpass-Turbo</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Add Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+    crossorigin="anonymous"></script>
+  <!-- then Leaflet JS -->
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Get turf.js, a geospatial processing library -->
+  <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+  <!-- Get the global data object -->
+  <script src="data.js"></script>
+  <script>
+    // Check the global object at start. This will be our storage for variables.
+    console.log(a);
+
+    // Set the page layout and kick off the fence finding process
+    setPage();
+
+    // Create the map
+    createMap();
+
+    // Set variables for header, map container, and footer
+    // and then set the map height to fill the window
+    function setPage() {
+      const header = document.querySelector(a.page.header);
+      const mapContainer = document.getElementById(a.map.div);
+      const footer = document.querySelector(a.page.footer);
+      mapContainer.style.height =
+        window.innerHeight - header.offsetHeight - footer.offsetHeight + "px";
+      // On Window resize, reset the map height
+      window.addEventListener("resize", setPage);
+      // Add current date to footer
+      setDate()
+    }
+
+    // Create the map using properties in global object
+function createMap() {
+  a.map.placed = L.map(a.map.div, a.map.options);
+  new L.control.zoom(a.map.zoomOptions).addTo(a.map.placed);
+  L.tileLayer(a.tiles.url, a.tiles.options).addTo(a.map.placed);
+
+  // Variable to store geofence layers globally
+  a.map.fenceLayers = [];
+
+  // Function to toggle geofences on/off
+  function toggleGeofences() {
+    const button = document.getElementById('toggle-geofence-btn');
+    
+    // Check if the geofences are already displayed
+    if (a.map.fenceLayers.length === 0) {
+      // If geofences are not shown, load them from the geojson
+      for (let i = 0; i < a.geojson.features.length; i++) {
+        const geojsonFeature = a.geojson.features[i];
+        const layer = L.geoJSON(geojsonFeature, {
+          style: {
+            color: 'red',      // Set the polygon color to red
+            weight: 2,         // Line width
+            fillColor: 'red',  // Fill color
+            fillOpacity: 0.1   // Transparency
+          }
+        }).addTo(a.map.placed);
+        a.map.fenceLayers.push(layer);  // Store the layer globally
+      }
+      button.innerHTML = "Hide Geofences";  // Update button text to 'Hide'
+    } else {
+      // If geofences are shown, remove them from the map
+      for (let i = 0; i < a.map.fenceLayers.length; i++) {
+        a.map.placed.removeLayer(a.map.fenceLayers[i]);
+      }
+      a.map.fenceLayers = [];  // Reset the array
+      button.innerHTML = "Show Geofences";  // Update button text to 'Show'
+    }
+  }
+
+  // Check if browser supports geolocation
+  if (navigator.geolocation) {
+    // Add the geolocation button
+    locateUI();
+    // Set the fences from a geojson file
+    setFences();
+    
+    // Attach the toggle event to the geofence button (added after fences are set)
+    document.getElementById('toggle-geofence-btn').addEventListener('click', toggleGeofences);
+  } else {
+    // If geolocation is not available, display a message
+    a.location.info.innerHTML = `No geolocation available on this browser.`;
+  }
+}
+
+    // Locate button and spinner elements into the global object
+    function locateUI() {
+      a.buttons.locate.placed = document.querySelector("#geolocate-ui");
+      a.buttons.locate.placed.classList.remove("d-none");
+      a.buttons.locate.placed.addEventListener("click", geoLocate);
+      a.location.info = document.querySelector("#locateFeedback");
+      a.location.spinner = document.querySelector("#loading");
+    }
+
+    // Set the fences from a geojson file using fetch and async/await
+    async function setFences() {
+      const response = await fetch("geoFences.geojson")
+      // Store the geojson in the global object
+      a.geojson = await response.json()
+      for (let i = 0; i < a.geojson.features.length; i++) {
+        // Create the fence polygons using turf.js
+        a.fences[i] = turf.polygon(a.geojson.features[i].geometry.coordinates)
+      }
+    }
+
+    // Geolocation function
+    function geoLocate() {
+      // Turn on the spinner
+      a.location.spinner.classList.toggle("d-none");
+      // Change the button text
+      a.buttons.locate.placed.innerHTML = "Locating...";
+      // Turn on high accuracy for mobile devices
+      a.location.hiAcc = L.Browser.mobile ? true : false;
+      // Create and zero counter variables
+      a.location.n = 0;
+      a.location.timerCount = 0;
+
+      // Get the geolocation API (shortened to api for brevity)
+      const api = navigator.geolocation;
+
+      // Error handling function expression
+      const error = err => {
+        a.location.info.innerHTML = `No geolocation available on this browser.`
+        console.log(err)
+      };
+
+      // Options for the geolocation API
+      const options = {
+        enableHighAccuracy: a.location.hiAcc,
+        maximumAge: 0,
+      };
+
+      // First go at getting the current position
+      api.getCurrentPosition(position => {
+        // Get the coordinates
+        const coords = position.coords;
+        const lat = coords.latitude;
+        const lng = coords.longitude;
+        // Create a latlng object. Note Leaflet uses lat, lng. turf.js uses lng, lat.
+        const latlng = L.latLng(lat, lng);
+
+        // Draw the location on map with a successful request.
+        drawGpsLocations(latlng)
+
+        // Turn off the spinner
+        a.location.spinner.classList.add("d-none");
+
+        // Change the button text
+        a.buttons.locate.placed.innerHTML = "Located!";
+        a.buttons.locate.placed.removeEventListener("click", geoLocate);
+        a.buttons.locate.placed.addEventListener("click", stopLocate);
+        a.location.info.innerHTML = "Waiting to check if you are inside a fence."
+
+      }, error, options);
+
+      // Function expression to get the current position.
+      // We'll use this function in a setInterval to get the current position periodically.
+      const nowPosition = () => {
+        // Get request for current position
+        api.getCurrentPosition(position => {
+
+          // Console log the success message and accuracy
+          console.log(`api success: ${a.location.n}`)
+          console.log(`accuracy: withing ${position.coords.accuracy * 3.28084} feet`);
+
+          // Increment the counter
+          a.location.n++;
+
+          // Get the coordinates
+          const coords = position.coords;
+          const lat = coords.latitude;
+          const lng = coords.longitude;
+          const latlng = L.latLng(lat, lng);
+          a.location.turf = [lng, lat];
+
+          // Draw the location of each successful request on the map.
+          drawGpsLocations(latlng)
+
+        }, error, options);
+      }; // end of nowPosition function
+
+      // Time for the show! Start the timer that executes the function periodically.
+      a.location.timer = setInterval(() => {
+        a.location.timerCount++;
+        if (a.location.n == 1) {
+          a.buttons.locate.placed.innerHTML = "Stop tracking";
+        }
+        console.log(`timer count: ${a.location.timerCount}`)
+        // If the timerCount is greater than 3 and the turf array is empty,
+        // then something went wrong. Alert the user with a message.
+        if (a.location.timerCount > 3 && a.location.turf.length == 0) {
+          a.locate.info.innerHTML = "Hmm. Something went wrong. Refresh browser?"
+        }
+
+        // Call the nowPosition function every 5 seconds
+        // to get the current position.
+        // Runs asynchronously and will not block the UI.
+        // The geolocation API might have a delay, but the
+        // interval will continue to run and the API will queue the requests.
+        nowPosition();
+      }, 5000);
+    }
+
+    // Function to stop the locate function and clear the timer
+    function stopLocate() {
+      clearInterval(a.location.timer);
+      if (a.location.marker) {
+        a.map.placed.removeLayer(a.location.marker);
+      }
+      a.buttons.locate.placed.innerHTML = "Locate again";
+      a.location.info.innerHTML = "Click locate again to see if you're within distance."
+      a.buttons.locate.placed.addEventListener("click", geoLocate);
+    }
+
+    // Function to draw the location on the map
+    function drawGpsLocations(latlng) {
+      a.map.placed.setView(latlng, 14); // Adjust zoom level for user view
+  
+      // If there is a marker, remove it
+      if (a.location.marker) {
+        a.map.placed.removeLayer(a.location.marker);
+      }
+      // Add the new marker. Explore icons and colors for markers.
+      a.location.marker = L.circleMarker(latlng, {
+        radius: 5,
+        color: "blue",
+        fillColor: "blue",
+        fillOpacity: 0.3,
+      }).addTo(a.map.placed)
+
+      // Store the Turf.js friendly coordinates (lng, lat)
+       a.location.turf = [latlng.lng, latlng.lat];
+
+
+      // Check the fences
+      checkFences()
+    }
+
+    // Function to check if the location is inside a fence
+    function checkFences() {
+      
+      // Check if the turf lng, lat array is empty
+      if (a.location.turf == 0) {
+        console.log("Wait to check.")
+        return
+      }
+      // If not, let's make a turf point
+      const point = turf.point(a.location.turf)
+
+    // Loop through the fences to check each polygon
+  let insideGeofence = false;
+  for (let i = 0; i < a.fences.length; i++) {
+    const fence = a.fences[i];
+    const inside = turf.booleanPointInPolygon(point, fence);
+
+    if (inside) {
+      insideGeofence = true;
+      // Provide feedback that the user is inside the fence
+      a.location.info.innerHTML = `<span class="badge bg-success">Inside ${a.geojson.features[i].properties.Name} geofence</span>`;
+      console.log(`You are inside the fence: ${a.geojson.features[i].properties.Name}`);
+      break;
+    }
+  }
+
+  // If the user is not inside any fence, provide feedback
+  if (!insideGeofence) {
+    a.location.info.innerHTML = `<span class="badge bg-danger">Outside of geofence</span>`;
+    console.log("You are outside of any geofence.");
+  }
+}
+    
+
+    // Function to find the nearest fence
+    function nearestFence() {
+      // Make a turf point from the location
+      const point = turf.point(a.location.turf)
+      // Set some variables to record the nearest fence
+      let nearest = Infinity
+      let nearestFence = null
+      let distance = 0
+      let bearing = 0
+      // Loop through the fences and find the nearest
+      for (let i = 0; i < a.fences.length; i++) {
+        const options = { units: "miles" };
+        // Get the centroid of the fence
+        const fence = turf.centroid(a.fences[i], options)
+        // Get the distance and bearing
+        distance = turf.distance(point, fence)
+        bearing = turf.bearingToAzimuth(turf.bearing(point, fence))
+        // If the distance is less than the nearest, update the nearest
+        if (distance < nearest) {
+          nearest = distance
+          nearestFence = a.geojson.features[i].properties.Name
+        }
+      }
+      // Update the info box with the nearest fence, distance, and direction
+      a.location.info.innerHTML = `The nearest fence is ${nearestFence} 
+                                   at ${nearest.toFixed(1)} miles
+                                   with a bearing of ${bearing.toFixed(1)} degrees.`
+    }
+
+    // Function to set the date in the footer
+    function setDate() {
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = date.toLocaleString('default', { month: 'long' });
+      const footerText = document.querySelector("footer p");
+      footerText.innerHTML = `${month}, ${year} | New Maps Plus`;
+    }
+  </script>
+</body>
