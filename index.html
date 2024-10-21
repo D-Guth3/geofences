@@ -446,70 +446,118 @@ function createMap() {
       checkFences()
     }
 
-    // Function to check if the location is inside a fence
-    function checkFences() {
-      
-      // Check if the turf lng, lat array is empty
-      if (a.location.turf == 0) {
-        console.log("Wait to check.")
-        return
-      }
-      // If not, let's make a turf point
-      const point = turf.point(a.location.turf)
+  function checkFences() {
+  if (a.location.turf.length === 0) {
+    console.log("Wait to check.");
+    return;
+  }
 
-    // Loop through the fences to check each polygon
+  const point = turf.point(a.location.turf); // Create a Turf.js point from the user's location
   let insideGeofence = false;
-  for (let i = 0; i < a.fences.length; i++) {
-    const fence = a.fences[i];
-    const inside = turf.booleanPointInPolygon(point, fence);
 
-    if (inside) {
-      insideGeofence = true;
-      // Provide feedback that the user is inside the fence
-      a.location.info.innerHTML = `<span class="badge bg-success">Inside ${a.geojson.features[i].properties.Name} geofence</span>`;
-      console.log(`You are inside the fence: ${a.geojson.features[i].properties.Name}`);
-      break;
+  for (let i = 0; i < a.geojson.features.length; i++) {
+    const feature = a.geojson.features[i];
+    const geometryType = feature.geometry.type;
+
+    // Handle Polygon
+    if (geometryType === "Polygon") {
+      const polygon = turf.polygon(feature.geometry.coordinates);
+      const inside = turf.booleanPointInPolygon(point, polygon);
+      if (inside) {
+        insideGeofence = true;
+        a.location.info.innerHTML = `<span class="badge bg-success">Inside ${feature.properties.street_address} geofence</span>`;
+        console.log(`You are inside the fence: ${feature.properties.street_address}`);
+        nearestBKPoint(); // Call the function to find the nearest BK point
+        break;
+      }
+    }
+    // Handle MultiPolygon
+    else if (geometryType === "MultiPolygon") {
+      const multiPolygon = turf.multiPolygon(feature.geometry.coordinates);
+      const inside = turf.booleanPointInPolygon(point, multiPolygon);
+      if (inside) {
+        insideGeofence = true;
+        a.location.info.innerHTML = `<span class="badge bg-success">Inside ${feature.properties.street_address} geofence</span>`;
+        console.log(`You are inside the MultiPolygon fence: ${feature.properties.street_address}`);
+        nearestBKPoint(); // Call the function to find the nearest BK point
+        break;
+      }
     }
   }
 
-  // If the user is not inside any fence, provide feedback
+  // If the user is not inside any fence, call nearestFence to find the nearest point
   if (!insideGeofence) {
     a.location.info.innerHTML = `<span class="badge bg-danger">Outside of geofence</span>`;
     console.log("You are outside of any geofence.");
+    nearestFence(); // Call the function to find the nearest point and log its "street_address"
   }
 }
-    
 
-    // Function to find the nearest fence
-    function nearestFence() {
-      // Make a turf point from the location
-      const point = turf.point(a.location.turf)
-      // Set some variables to record the nearest fence
-      let nearest = Infinity
-      let nearestFence = null
-      let distance = 0
-      let bearing = 0
-      // Loop through the fences and find the nearest
-      for (let i = 0; i < a.fences.length; i++) {
-        const options = { units: "miles" };
-        // Get the centroid of the fence
-        const fence = turf.centroid(a.fences[i], options)
-        // Get the distance and bearing
-        distance = turf.distance(point, fence)
-        bearing = turf.bearingToAzimuth(turf.bearing(point, fence))
-        // If the distance is less than the nearest, update the nearest
-        if (distance < nearest) {
-          nearest = distance
-          nearestFence = a.geojson.features[i].properties.Name
-        }
-      }
-      // Update the info box with the nearest fence, distance, and direction
-      a.location.info.innerHTML = `The nearest fence is ${nearestFence} 
-                                   at ${nearest.toFixed(1)} miles
-                                   with a bearing of ${bearing.toFixed(1)} degrees.`
+// Function to find the nearest Burger King point when inside the geofence
+async function nearestBKPoint() {
+  // Fetch the Burger King points data
+  const response = await fetch("bkPoints.geojson");
+  const bkPoints = await response.json();
+
+  // Make a turf point from the current location
+  const point = turf.point(a.location.turf);
+
+  let nearestDistance = Infinity;
+  let nearestPoint = null;
+  let nearestStreetAddress = '';
+
+  // Loop through each feature in the bkPoints.geojson
+  bkPoints.features.forEach((feature) => {
+    const bkPoint = turf.point(feature.geometry.coordinates);
+    const distance = turf.distance(point, bkPoint, { units: 'miles' });
+
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestPoint = bkPoint;
+      nearestStreetAddress = feature.properties.street_address;  // Get the street_address
     }
+  });
 
-    // Function to set the date in the footer
+  // Log the nearest BK point's street_address to the console
+  console.log(`The nearest Burger King is at: ${nearestStreetAddress}`);
+
+  // Optional: You can also display this information in the UI
+  a.location.info.innerHTML += `<br>Get Your 1¢ Burger at Burger King: ${nearestStreetAddress}`;
+}
+
+
+// Function to find the nearest geofence if the user is outside all geofences
+async function nearestFence() {
+  // Fetch the geofence center points data
+  const response = await fetch("geofenceCenterPoint.geojson");
+  const centerPoints = await response.json();
+
+  // Make a turf point from the current location
+  const point = turf.point(a.location.turf);
+
+  let nearestDistance = Infinity;
+  let nearestPoint = null;
+  let nearestStreetAddress = '';
+
+  // Loop through each feature in the geofenceCenterPoint.geojson
+  centerPoints.features.forEach((feature) => {
+    const centerPoint = turf.point(feature.geometry.coordinates);
+    const distance = turf.distance(point, centerPoint, { units: 'miles' });
+
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearestPoint = centerPoint;
+      nearestStreetAddress = feature.properties.street_address;  // Get the street_address
+    }
+  });
+
+  // Log the nearest point's street_address to the console
+  console.log(`The nearest geofence center point is at: ${nearestStreetAddress}`);
+
+  // Optional: You can also display this information in the UI
+  a.location.info.innerHTML += `<br>Nearest Geofence Center Point: ${nearestStreetAddress}`;
+}
+// Function to set the date in the footer
     function setDate() {
       const date = new Date();
       const year = date.getFullYear();
